@@ -219,6 +219,25 @@ fn register_enums(py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
+#[pyfunction]
+fn make_div(py: Python<'_>, div: PyRef<'_, PyDivEntity>) -> PyResult<Py<PyAny>> {
+    let rust_entity = div.to_rust_entity();
+    let json_val = entity::make_div(rust_entity.as_ref());
+    json_to_py(py, &json_val)
+}
+
+#[pyfunction]
+fn make_card(
+    py: Python<'_>,
+    log_id: &str,
+    div: PyRef<'_, PyDivEntity>,
+) -> PyResult<Py<PyAny>> {
+    let rust_entity = div.to_rust_entity();
+    let data = entity::make_card(log_id, rust_entity.as_ref());
+    let json_val = <entity::DivData as Entity>::dict(&data);
+    json_to_py(py, &json_val)
+}
+
 /// The native Python module `divkit_rs._native`.
 #[pymodule]
 pub fn _native(py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -229,27 +248,8 @@ pub fn _native(py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     register_all_entities(py, m)?;
     register_enums(py, m)?;
 
-    // Module-level helpers
-    #[pyfn(m)]
-    #[pyo3(name = "make_div")]
-    fn py_make_div(py: Python<'_>, div: PyRef<'_, PyDivEntity>) -> PyResult<PyObject> {
-        let rust_entity = div.to_rust_entity();
-        let json_val = entity::make_div(rust_entity.as_ref());
-        json_to_py(py, &json_val)
-    }
-
-    #[pyfn(m)]
-    #[pyo3(name = "make_card")]
-    fn py_make_card(
-        py: Python<'_>,
-        log_id: &str,
-        div: PyRef<'_, PyDivEntity>,
-    ) -> PyResult<PyObject> {
-        let rust_entity = div.to_rust_entity();
-        let data = entity::make_card(log_id, rust_entity.as_ref());
-        let json_val = <entity::DivData as Entity>::dict(&data);
-        json_to_py(py, &json_val)
-    }
+    m.add_function(wrap_pyfunction!(make_div, m)?)?;
+    m.add_function(wrap_pyfunction!(make_card, m)?)?;
 
     Ok(())
 }

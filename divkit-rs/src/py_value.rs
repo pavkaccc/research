@@ -51,7 +51,7 @@ pub fn py_to_divvalue(obj: &Bound<'_, PyAny>) -> PyResult<DivValue> {
 
     // List
     if obj.is_instance_of::<PyList>() {
-        let list = obj.downcast::<PyList>()?;
+        let list = obj.cast::<PyList>()?;
         let mut items = Vec::with_capacity(list.len());
         for item in list.iter() {
             items.push(py_to_divvalue(&item)?);
@@ -61,7 +61,7 @@ pub fn py_to_divvalue(obj: &Bound<'_, PyAny>) -> PyResult<DivValue> {
 
     // Dict
     if obj.is_instance_of::<PyDict>() {
-        let dict = obj.downcast::<PyDict>()?;
+        let dict = obj.cast::<PyDict>()?;
         let mut entries = Vec::with_capacity(dict.len());
         for (k, v) in dict.iter() {
             let key: String = k.extract()?;
@@ -76,7 +76,7 @@ pub fn py_to_divvalue(obj: &Bound<'_, PyAny>) -> PyResult<DivValue> {
 }
 
 /// Convert a serde_json::Value to a Python object.
-pub fn json_to_py(py: Python<'_>, val: &serde_json::Value) -> PyResult<PyObject> {
+pub fn json_to_py(py: Python<'_>, val: &serde_json::Value) -> PyResult<Py<PyAny>> {
     match val {
         serde_json::Value::Null => Ok(py.None()),
         serde_json::Value::Bool(b) => Ok((*b).into_pyobject(py)?.to_owned().into_any().unbind()),
@@ -91,7 +91,7 @@ pub fn json_to_py(py: Python<'_>, val: &serde_json::Value) -> PyResult<PyObject>
         }
         serde_json::Value::String(s) => Ok(s.as_str().into_pyobject(py)?.into_any().unbind()),
         serde_json::Value::Array(arr) => {
-            let items: Vec<PyObject> = arr
+            let items: Vec<Py<PyAny>> = arr
                 .iter()
                 .map(|item| json_to_py(py, item))
                 .collect::<PyResult<_>>()?;

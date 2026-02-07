@@ -19,7 +19,7 @@ pub struct EntityTypeMeta {
 }
 
 /// Generic Python wrapper for any DivKit entity.
-#[pyclass(subclass)]
+#[pyclass(subclass, from_py_object)]
 #[derive(Clone)]
 pub struct PyDivEntity {
     pub type_meta: EntityTypeMeta,
@@ -60,18 +60,18 @@ impl PyDivEntity {
         })
     }
 
-    fn dict(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn dict(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let entity = self.to_rust_entity();
         let json_val = entity.dict();
         json_to_py(py, &json_val)
     }
 
-    fn build(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn build(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         self.dict(py)
     }
 
     #[pyo3(signature = (exclude_fields=None))]
-    fn schema(&self, py: Python<'_>, exclude_fields: Option<Vec<String>>) -> PyResult<PyObject> {
+    fn schema(&self, py: Python<'_>, exclude_fields: Option<Vec<String>>) -> PyResult<Py<PyAny>> {
         let entity = self.to_rust_entity();
         let exclude_refs: Option<Vec<&str>> =
             exclude_fields.as_ref().map(|v| v.iter().map(|s| s.as_str()).collect());
@@ -182,14 +182,15 @@ pub fn register_entity_class(
 }
 
 /// Python wrapper for DivData.
-#[pyclass]
+#[derive(Clone)]
+#[pyclass(from_py_object)]
 pub struct PyDivData {
     pub log_id: String,
     pub states: Vec<PyDivDataState>,
 }
 
 #[derive(Clone)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct PyDivDataState {
     pub state_id: i64,
     pub div: PyDivEntity,
@@ -203,7 +204,7 @@ impl PyDivData {
         PyDivData { log_id, states }
     }
 
-    fn dict(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn dict(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let rust_states: Vec<DivDataState> = self
             .states
             .iter()
@@ -220,7 +221,7 @@ impl PyDivData {
         json_to_py(py, &json_val)
     }
 
-    fn build(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn build(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         self.dict(py)
     }
 }
