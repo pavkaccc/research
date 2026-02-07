@@ -10,7 +10,7 @@ use crate::value::DivValue;
 /// - `dict()` / `build()`: serialize to JSON value (same as Python's `.dict()`)
 /// - `schema()`: generate JSON Schema
 /// - Field metadata access
-pub trait Entity: std::fmt::Debug + EntityClone {
+pub trait Entity: std::fmt::Debug + EntityClone + Send + Sync {
     /// The type name (e.g., "text", "container"). None for non-typed entities.
     fn type_name(&self) -> Option<&str> {
         None
@@ -90,7 +90,7 @@ pub fn entity_to_value<E: Entity + 'static>(e: E) -> DivValue {
 
 /// Build a complete card with templates and card data.
 /// Mirrors Python's `make_div()`.
-pub fn make_div<E: Entity>(div: &E) -> Value {
+pub fn make_div<E: Entity + ?Sized>(div: &E) -> Value {
     let mut templates = serde_json::Map::new();
     for tpl in div.related_templates() {
         templates.insert(tpl.template_name().to_string(), tpl.template());
@@ -106,7 +106,7 @@ pub fn make_div<E: Entity>(div: &E) -> Value {
 
 /// Build a DivData card wrapper.
 /// Mirrors Python's `make_card()`.
-pub fn make_card<E: Entity>(log_id: &str, div: &E) -> DivData {
+pub fn make_card<E: Entity + ?Sized>(log_id: &str, div: &E) -> DivData {
     let boxed: Box<dyn Entity> = div.clone_box();
     DivData {
         log_id: log_id.to_string(),
