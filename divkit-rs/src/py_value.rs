@@ -1,4 +1,5 @@
 use pyo3::prelude::*;
+use pyo3::conversion::IntoPyObject;
 use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString};
 
 use crate::entity::Entity;
@@ -78,30 +79,30 @@ pub fn py_to_divvalue(obj: &Bound<'_, PyAny>) -> PyResult<DivValue> {
 pub fn json_to_py(py: Python<'_>, val: &serde_json::Value) -> PyResult<PyObject> {
     match val {
         serde_json::Value::Null => Ok(py.None()),
-        serde_json::Value::Bool(b) => Ok(b.to_object(py)),
+        serde_json::Value::Bool(b) => Ok((*b).into_pyobject(py)?.to_owned().into_any().unbind()),
         serde_json::Value::Number(n) => {
             if let Some(i) = n.as_i64() {
-                Ok(i.to_object(py))
+                Ok(i.into_pyobject(py)?.into_any().unbind())
             } else if let Some(f) = n.as_f64() {
-                Ok(f.to_object(py))
+                Ok(f.into_pyobject(py)?.into_any().unbind())
             } else {
                 Ok(py.None())
             }
         }
-        serde_json::Value::String(s) => Ok(s.to_object(py)),
+        serde_json::Value::String(s) => Ok(s.as_str().into_pyobject(py)?.into_any().unbind()),
         serde_json::Value::Array(arr) => {
             let items: Vec<PyObject> = arr
                 .iter()
                 .map(|item| json_to_py(py, item))
                 .collect::<PyResult<_>>()?;
-            Ok(PyList::new_bound(py, &items).into())
+            Ok(PyList::new(py, &items)?.into_any().unbind())
         }
         serde_json::Value::Object(map) => {
-            let dict = PyDict::new_bound(py);
+            let dict = PyDict::new(py);
             for (k, v) in map {
                 dict.set_item(k, json_to_py(py, v)?)?;
             }
-            Ok(dict.into())
+            Ok(dict.into_any().unbind())
         }
     }
 }

@@ -211,7 +211,8 @@ fn register_enums(py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
             .collect::<Vec<_>>()
             .join(", ");
         let code = format!("type('{}', (), {{{}}})", enum_name, attrs);
-        let cls = py.eval_bound(&code, None, None)?;
+        let code_cstr = std::ffi::CString::new(code).unwrap();
+        let cls = py.eval(&code_cstr, None, None)?;
         m.setattr(*enum_name, cls)?;
     }
 

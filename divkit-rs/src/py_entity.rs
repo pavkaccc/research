@@ -157,7 +157,7 @@ pub fn register_entity_class(
     };
 
     // Create a closure that produces PyDivEntity with the right meta
-    let constructor = pyo3::types::PyCFunction::new_closure_bound(
+    let constructor = pyo3::types::PyCFunction::new_closure(
         py,
         None,
         None,
