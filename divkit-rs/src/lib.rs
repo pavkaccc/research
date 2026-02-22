@@ -33,6 +33,11 @@ pub mod field;
 pub mod schema;
 pub mod value;
 
+// Python bindings
+pub mod py_entity;
+pub mod py_value;
+pub mod python;
+
 // Re-export commonly used items
 pub use entity::{make_card, make_div, DivData, DivDataState, Entity, Template};
 pub use expr::Expr;
